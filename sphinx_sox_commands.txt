@@ -1,0 +1,71 @@
+
+###
+## TRAIN A MODEL
+#
+
+sphinxtrain -t kazakh setup
+
+sphinxtrain run
+
+#
+##
+###
+
+
+
+###
+##  ADAPT A MODEL
+#
+
+sphinx_fe -argfile kazakh_org/feat.params -samprate 16000 -c atai_plus_tokmok_1.fileids -di . -do . -ei wav -eo mfc -mswav yes
+
+./bw  -hmmdir kazakh_org  -moddeffn kazakh_org/mdef  -ts2cbfn .cont.  -feat 1s_c_d_dd -cmn current  -agc none  -dictfn kyrgyz.dic  -ctlfn atai_plus_tokmok_1.fileids  -lsnfn atai_plus_tokmok_1.transcription  -accumdir .
+
+./mllr_solve     -meanfn kazakh_org/means     -varfn kazakh_org/variances     -outmllrfn mllr_matrix -accumdir .
+
+cp -a kazakh_org kyrgyz_adapt
+
+./map_adapt     -moddeffn kazakh_org/mdef     -ts2cbfn .cont.     -meanfn kazakh_org/means     -varfn kazakh_org/variances     -mixwfn kazakh_org/mixture_weights     -tmatfn kazakh_org/transition_matrices     -accumdir .     -mapmeanfn kazakh_atai_plus_tokmok_1/means     -mapvarfn kazakh_atai_plus_tokmok_1/variances     -mapmixwfn kazakh_atai_plus_tokmok_1/mixture_weights     -maptmatfn kazakh_atai_plus_tokmok_1/transition_matrices
+
+./mk_s2sendump     -pocketsphinx yes     -moddeffn kazakh_atai_plus_tokmok_1/mdef     -mixwfn kazakh_atai_plus_tokmok_1/mixture_weights     -sendumpfn kazakh_atai_plus_tokmok_1/sendump
+
+#
+##
+###
+
+
+
+###
+## TEST A MODEL
+#
+
+pocketsphinx_continuous -hmm kyrgyz_adapt -lm kyrgyz.lm.DMP -dict kyrgyz.dic -inmic yes
+
+pocketsphinx_batch  -adcin yes  -cepdir test_WAVs  -cepext .wav  -ctl test.fileids  -lm kyrgyz_bigram_turing_lm.DMP -dict kyrgyz.dic -hmm kazakh_atai_plus_tokmok_1  -hyp kazakh_atai_plus_tokmok_1_turing.hyp
+
+perl word_align.pl test.transcription kazakh_atai_plus_tokmok_1_turing.hyp
+
+#
+##
+###
+
+
+###
+## USING SOX
+#
+
+# get some info on your files
+for i in *wav; do sox --i $i; done
+
+# play files (play is from sox)
+for i in *wav; do play $i; done
+
+# downsample to 16kHz
+for i in *wav; do sox $i -r 16k ${i}_16k.wav; done
+
+# merge stereo channels into one mono
+for i in *wav; do sox $i ${i}_mono_merged.wav remix 1,2; done
+
+#
+##
+###
