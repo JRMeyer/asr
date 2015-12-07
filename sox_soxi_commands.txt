@@ -1,0 +1,57 @@
+###
+## SOX  --  Sound eXchange
+#           http://sox.sourceforge.net/
+
+## get support for mp3 files
+## https://packages.debian.org/wheezy/libsox-fmt-mp3
+sudo apt-get install libsox-fmt-mp3; sudo apt-get upgrade sox
+
+## get some info on your files
+for i in *wav; do sox --i $i; done
+
+## play files (play is from sox)
+for i in *wav; do play $i; done
+
+## downsample to 16kHz
+for i in *wav; do sox $i -r 16k ${i}_16k.wav; done
+
+## merge stereo channels into one mono
+for i in *wav; do sox $i ${i}_mono_merged.wav remix 1,2; done
+
+#
+##
+###
+
+
+
+
+
+###
+## SOXI  --  Sound eXchange Information, display sound file metadata
+#            http://sox.sourceforge.net/soxi.html#DESCRIPTION
+
+## Displays information from the header of a given audio file or files.
+## Supported audio file types are listed and described in soxformat(7).
+## Note however, that soxi is intended for use only with audio files
+## with a self-describing header.
+
+## get duration of WAV files
+for i in *wav; do soxi -D $i; done
+
+## get duration of WAV files
+OUTPUT="$(for i in *wav; do soxi -D $i; done)";
+echo "${OUTPUT}"
+
+## get total number of seconds of WAVs in dir
+TOTAL_SECS=0
+for i in *wav; do      
+    SECS="$(soxi -D $i)"
+    TOTAL_SECS=$(echo "$TOTAL_SECS + $SECS" | bc)
+    done
+printf "\n\nThere are a total of ${TOTAL_SECS}
+       seconds of WAV files in the dir\n\n"
+
+
+#
+##
+###

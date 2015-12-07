@@ -50,22 +50,3 @@ perl word_align.pl test.transcription kazakh_atai_plus_tokmok_1_turing.hyp
 ###
 
 
-###
-## USING SOX
-#
-
-# get some info on your files
-for i in *wav; do sox --i $i; done
-
-# play files (play is from sox)
-for i in *wav; do play $i; done
-
-# downsample to 16kHz
-for i in *wav; do sox $i -r 16k ${i}_16k.wav; done
-
-# merge stereo channels into one mono
-for i in *wav; do sox $i ${i}_mono_merged.wav remix 1,2; done
-
-#
-##
-###
