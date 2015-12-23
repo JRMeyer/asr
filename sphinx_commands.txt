@@ -2,8 +2,86 @@
 ###
 ## TRAIN A MODEL
 #
+#
+# File Structure - *filenames matter* & 'your_db' should always be the same
+#
+# your_db/
+# 	etc/
+# 		your_db.dic - Phonetic dictionary
+# 		your_db.phone - Phoneset file
+# 		your_db.lm - Language model
+# 		your_db.filler - List of fillers
+# 		your_db_train.fileids - List of files for training
+# 		your_db_train.transcription - Transcription for training
+# 		your_db_test.fileids - List of files for testing
+# 		your_db_test.transcription - Transcription for testing
+# 	wav/
+# 		speaker_1/
+# 			file_1.wav - Recording of speech utterance
+# 		speaker_2/
+# 			file_2.wav
 
-sphinxtrain -t kazakh setup
+# File contents:
+#
+#   .fileids (paths to WAV files w/o extensions)
+# 	speaker_1/file_1
+# 	speaker_2/file_2
+# 	      ...
+#	      
+#   .transcription (transcription + file id w/o path or extension)
+#   	 <s> hello world </s> (file_1)
+# 	 <s> foo bar </s> (file_2)
+# 	            ...
+#
+#   .wav (Recording files)
+#        WAV, (16 kHz, 16 bit, mono - desktop), (8kHz, 16bit, mono - telephone)
+#        **Audio format mismatch is the most common training problem**
+#
+#   .dict (use alphanumeric-only, case-insensitive)
+# 	HELLO HH AH L OW
+# 	WORLD W AO R L D
+# 	      ...
+#
+#   .phone (one phone per line + SIL for silence)
+#   	 SIL
+#   	 A
+# 	 O
+# 	 I
+# 	 ...
+#
+#   .lm (or .lm.bin, should be in ARPA format)
+#
+#   .filler (filler noise dict)
+#   	  <s> SIL
+# 	  </s> SIL
+# 	  <sil> SIL
+# 	  +um+ ++um++
+# 	  +laugh+ ++laugh++	
+# 	  ...
+
+sphinxtrain -t model_dir setup
+
+## EXAMPLE OUTPUT
+
+# josh@yoga:~/Desktop/kyrgyz$ la
+# etc  wav
+#
+# josh@yoga:~/Desktop/kyrgyz$ la etc/
+# kyrgyz.dic     kyrgyz.phone               kyrgyz_train.fileids
+# kyrgyz.filler  kyrgyz_test.fileids        kyrgyz_train.transcription
+# kyrgyz.lm      kyrgyz_test.transcription
+#
+# josh@yoga:~/Desktop/kyrgyz$ sphinxtrain -t kyrgyz setup
+# Sphinxtrain path: /usr/local/lib/sphinxtrain
+# Sphinxtrain binaries path: /usr/local/libexec/sphinxtrain
+# Setting up the database kyrgyz
+#
+# josh@yoga:~/Desktop/kyrgyz$ la etc/
+# feat.params    kyrgyz.phone               kyrgyz_train.transcription
+# kyrgyz.dic     kyrgyz_test.fileids        sphinx_train.cfg
+# kyrgyz.filler  kyrgyz_test.transcription
+# kyrgyz.lm      kyrgyz_train.fileids
+
 
 sphinxtrain run
 
@@ -43,7 +121,9 @@ pocketsphinx_continuous -hmm kyrgyz_adapt -lm kyrgyz.lm.DMP -dict kyrgyz.dic -in
 
 pocketsphinx_batch  -adcin yes  -cepdir test_WAVs  -cepext .wav  -ctl test.fileids  -lm kyrgyz_bigram_turing_lm.DMP -dict kyrgyz.dic -hmm kazakh_atai_plus_tokmok_1  -hyp kazakh_atai_plus_tokmok_1_turing.hyp
 
-perl word_align.pl test.transcription kazakh_atai_plus_tokmok_1_turing.hyp
+## once you have run batch decoding on some files and generated a .hyp
+## file, do this command to see how good your hypotheses were
+perl word_align.pl test.transcription kyrgyz_only.hyp
 
 #
 ##
