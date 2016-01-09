@@ -2,7 +2,7 @@ import re
 
 def clean_lines_in_file(fileName,kyrgyzLetters):
     '''
-    Given a path to a text file
+    Given a path to a text file:
     (1) split file into lines where sentences should be (see regex object)
     (2) tokenize each line (see function tokenize_line()
     (3) add each line as a character string to 'lines'

@@ -1,9 +1,34 @@
 '''
-Joshua Meyer
+Author: Joshua Meyer
 
-Given a corpus (text file), output a model of n-grams in ARPA format
+DESCRIPTION: Given a cleaned corpus (text file), output a model of n-grams 
+in ARPA format
 
-USAGE: $ python3 ngrams.py
+USAGE: $ python3 ngrams.py --help
+
+#####################
+The MIT License (MIT)
+
+Copyright (c) 2016 
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+#####################
 '''
 
 import argparse
@@ -106,7 +131,6 @@ def get_freq_dict(nGrams, nGramOrder, smoothing, _lambda, startTime):
     elif smoothing == "laplace":
         numSmooth = 1
         denominator = (len(nGrams)+ len(nGrams)**nGramOrder)
-        probUnSeen = 1/denominator
         probDict={}
         for key, value in Counter(nGrams).items():
             probDict[key] = (value + numSmooth) / denominator
@@ -114,7 +138,6 @@ def get_freq_dict(nGrams, nGramOrder, smoothing, _lambda, startTime):
     elif smoothing == 'lidstone':
         numSmooth = _lambda
         denominator = (len(nGrams) + (len(nGrams)**nGramOrder)*_lambda)
-        probUnSeen = _lambda/denominator
         probDict={}
         for key, value in Counter(nGrams).items():
             probDict[key] = (value + numSmooth) / denominator
@@ -126,19 +149,15 @@ def get_freq_dict(nGrams, nGramOrder, smoothing, _lambda, startTime):
         # n_r = number of n-grams which occured r times
         # P_T = r*/N, the probability of an n-gram which occured r times
         # r* = (r+1) * ( (n_{r+1}) / (n_r) )
-
         N = len(unigrams)
-        
         freqDist_nGrams={}
         for key,value in Counter(nGrams).items():
             # key = n-gram, value = r
             freqDist_nGrams[key] = value
-            
         freqDist_freqs={}
         for key,value in Counter(freqDist_nGrams.values()).items():
             # key = r, value = n_r
             freqDist_freqs[key] = value
-        
         probDict={}
         for key,value in freqDist_nGrams.items():
             r = value
@@ -151,7 +170,6 @@ def get_freq_dict(nGrams, nGramOrder, smoothing, _lambda, startTime):
                 n_r_plus_1 = n_r
             r_star = (r+1)*((n_r_plus_1)/(n_r))
             probDict[key] = r_star/N
-            
         
     print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t] '+
           str(nGramOrder) + '-gram probability dictionary made')
@@ -216,9 +234,7 @@ def get_brants_bow_dict(nGramDict, alpha=.4):
     return bow_dict
     
 
-
-
-if __name__ == "__main__":
+def main():
     # get user input
     args = parse_user_args()
     fileName = args.infile
@@ -230,8 +246,9 @@ if __name__ == "__main__":
     startTime = time.time()
     print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+ ' running')
 
-    # open cleaned file
+    # open previously cleaned file
     f = open(fileName)
+
     lines = ''
     for line in f:
         lines += line
@@ -268,18 +285,15 @@ if __name__ == "__main__":
                '_cutoff-' + str(k)+
                '.txt'),
               'w', encoding = 'utf-8') as outFile:
-
         # Print ARPA preamble
         outFile.write('\n\data\\\n')
         outFile.write('ngram 1=' + str(len(uniProbDict)) +'\n')
         outFile.write('ngram 2=' + str(len(biProbDict)) +'\n')
         outFile.write('ngram 3=' + str(len(triProbDict)) +'\n')
-
         ## print unigrams
         outFile.write('\n\\1-grams:\n')
         sortedUni = sorted(uniBowDict.items(), key=operator.itemgetter(1),
                           reverse=True)
-        
         for key,value in sortedUni:
             if backoff:
                 entry = (str(np.log(value[0])) +' '+ key[0] +' '+
@@ -287,13 +301,11 @@ if __name__ == "__main__":
             else:
                 entry = (str(np.log(value[0])) +' '+ key[0])
             outFile.write(entry+'\n')
-
             
         ## print bigrams
         outFile.write('\n\\2-grams:\n')
         sortedBi = sorted(biBowDict.items(), key=operator.itemgetter(1),
                            reverse=True)
-
         for key,value in sortedBi:
             if backoff:
                 entry = (str(np.log(value[0])) +' '+ key[0] +' '+ key[1] +' '+
@@ -302,17 +314,17 @@ if __name__ == "__main__":
                 entry = (str(np.log(value[0])) +' '+ key[0] +' '+ key[1])
             outFile.write(entry+'\n')
 
-
         ## print trigrams
         outFile.write('\n\\3-grams:\n')
         sortedTri = sorted(triCondDict.items(), key=operator.itemgetter(1),
                            reverse=True)
-        
         for key,value in sortedTri:
             entry = (str(np.log(value)) +' '+ key[0] +' '+ key[1] +' '+ key[2])
             outFile.write(entry+'\n')
-            
         outFile.write('\n\end\\')
-
     print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
           ' successfully printed model to file!')
+
+
+if __name__ == "__main__":
+    main()
