@@ -1,14 +1,28 @@
+'''
+USE: pyhon3 clean_text.py /path/to/corpus.txt
+
+FUNCTION:
+  Given a path to a text file, this script will:
+   (1) split file into lines where sentences should be (see regex object)
+   (2) tokenize each line (see function tokenize_line()
+   (3) print new, cleaned lines to output file
+
+OUTPUT: output.txt (text file with one sentence per line, no non-alphabetic
+                    characters, all lowercase words, only Kyrgyz characters)
+'''
+
+
 import re
 
 def clean_lines_in_file(fileName,kyrgyzLetters):
     '''
     Given a path to a text file:
     (1) split file into lines where sentences should be (see regex object)
-    (2) tokenize each line (see function tokenize_line()
+    (2) tokenize each line (see function tokenize_line())
     (3) add each line as a character string to 'lines'
     '''
     regex = re.compile(r'[.!?\n]')
-    outFile = open('cleaned_text.txt', 'w')
+    outFile = open('output.txt', 'w')
     with open(fileName) as inFile:
         content = inFile.read()
         for line in re.split(regex,content):
@@ -55,7 +69,10 @@ kyrgyzLetters = ['а','о','у','ы','и','е','э',
                 'м','н','ң','ф','в','р','ъ',
                 'ь']
 
-if __name__ == "__main__":
+def main():
     import sys
     infile = sys.argv[1]
     clean_lines_in_file(infile, kyrgyzLetters)
+
+if __name__ == "__main__":
+    main()
