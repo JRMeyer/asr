@@ -1,10 +1,12 @@
 '''
 Author: Joshua Meyer
 
+USAGE: $ python3 ngrams.py -i INFILE -s SMOOTHING -w LIDSTONE_LAMBDA -b BACKOFF 
+                           -k FREQUENCY_CUTOFF 
+
 DESCRIPTION: Given a cleaned corpus (text file), output a model of n-grams 
 in ARPA format
 
-USAGE: $ python3 ngrams.py --help
 
 #####################
 The MIT License (MIT)
@@ -31,10 +33,12 @@ SOFTWARE.
 #####################
 '''
 
+from corpus_stats import get_frequency_dict, get_conditional_dict
+from backoff import get_brants_bow_dict
 import argparse
 import operator
-from collections import Counter
 import numpy as np
+from collections import Counter
 import re
 import time
 import sys
@@ -79,16 +83,16 @@ def replace_cutoff_with_UNK(lines, cutOffWords, startTime):
     return lines
 
 
-def get_nGram_tuples(lines,startTime,lenSentenceCutoff):
+def get_ngram_tuples(lines,startTime,lenSentenceCutoff):
     unigrams=[]
     bigrams=[]
     trigrams=[]
     for line in lines.split('\n'):
         line = line.split(' ')
         if len(line) >lenSentenceCutoff:
-            unigrams+=get_nGrams_from_line(line,1)
-            bigrams+=get_nGrams_from_line(line,2)
-            trigrams+=get_nGrams_from_line(line,3)
+            unigrams+=get_ngrams_from_line(line,1)
+            bigrams+=get_ngrams_from_line(line,2)
+            trigrams+=get_ngrams_from_line(line,3)
     print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
           ' A total of ' +str(len(unigrams))+
           ' unigrams found')
@@ -99,140 +103,22 @@ def get_nGram_tuples(lines,startTime,lenSentenceCutoff):
     return unigrams, bigrams, trigrams
 
 
-def get_nGrams_from_line(tokens, n):
+def get_ngrams_from_line(tokens, n):
     '''
-    Given a list of tokens, return a list of tuple nGrams
+    Given a list of tokens, return a list of tuple ngrams
     '''
-    nGrams=[]
+    ngrams=[]
     # special case for unigrams
     if n==1:
         for token in tokens:
             # we need parentheses and a comma to make a tuple
-            nGrams.append((token,))
+            ngrams.append((token,))
     # general n-gram case
     else:
         for i in range(len(tokens)-(n-1)):
-            nGrams.append(tuple(tokens[i:i+n]))
-    return nGrams
+            ngrams.append(tuple(tokens[i:i+n]))
+    return ngrams
 
-
-def get_freq_dict(nGrams, nGramOrder, smoothing, _lambda, startTime):
-    '''
-    Make a dictionary of probabilities, where the key is the nGram.
-    Without smoothing, we have: p(X) = freq(X)/NUMBER_OF_NGRAMS
-    '''
-    
-    if smoothing == 'none':
-        denominator = len(nGrams)
-        probDict={}
-        for key, value in Counter(nGrams).items():
-            probDict[key] = value/denominator
-
-    elif smoothing == "laplace":
-        numSmooth = 1
-        denominator = (len(nGrams)+ len(nGrams)**nGramOrder)
-        probDict={}
-        for key, value in Counter(nGrams).items():
-            probDict[key] = (value + numSmooth) / denominator
-
-    elif smoothing == 'lidstone':
-        numSmooth = _lambda
-        denominator = (len(nGrams) + (len(nGrams)**nGramOrder)*_lambda)
-        probDict={}
-        for key, value in Counter(nGrams).items():
-            probDict[key] = (value + numSmooth) / denominator
-
-    elif smoothing == 'turing':
-        # N = total number of n-grams in text
-        # N_1 = number of hapaxes
-        # r = frequency of an n-gram
-        # n_r = number of n-grams which occured r times
-        # P_T = r*/N, the probability of an n-gram which occured r times
-        # r* = (r+1) * ( (n_{r+1}) / (n_r) )
-        N = len(unigrams)
-        freqDist_nGrams={}
-        for key,value in Counter(nGrams).items():
-            # key = n-gram, value = r
-            freqDist_nGrams[key] = value
-        freqDist_freqs={}
-        for key,value in Counter(freqDist_nGrams.values()).items():
-            # key = r, value = n_r
-            freqDist_freqs[key] = value
-        probDict={}
-        for key,value in freqDist_nGrams.items():
-            r = value
-            n_r = freqDist_freqs[r]
-            try:
-                n_r_plus_1 = freqDist_freqs[r+1]
-            except KeyError as exception:
-                print('There are no n-grams with frequency ' +str(exception)+
-                      '... using ' +str(r)+ ' instead')
-                n_r_plus_1 = n_r
-            r_star = (r+1)*((n_r_plus_1)/(n_r))
-            probDict[key] = r_star/N
-        
-    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t] '+
-          str(nGramOrder) + '-gram probability dictionary made')
-    
-    return probDict
-
-
-def get_conditional_dict(nMinus1GramDict,nGramDict,nGramOrder):
-    '''
-    Given a dictionary of nGrams and one of n-1-grams with their 
-    frequencies for some corpus, compute the conditional probabilities for
-    nGrams.
-    
-    p(N|N_MINUS_ONE) = p(N)/p(N_MINUS_ONE)
-    p(B|A) =  p(A_B)/p(A)
-    log(p(B|A)) = log(p(A_B)) - log(p(A))
-    '''
-    nGramCondDict={}
-    for nGram, nGramProb in nGramDict.items():
-        nMinus1Gram = nGram[:nGramOrder-1]
-        nMinus1GramProb = nMinus1GramDict[nMinus1Gram]
-        condNGramProb = nGramProb / nMinus1GramProb
-        nGramCondDict[nGram] = condNGramProb
-    return nGramCondDict
-
-
-def get_bow_katz_dict(uniProbDict,biProbDict,triProbDict,startTime):
-    # calculate backoff weights as in Katz 1987
-    bowDict={}
-    for uniKey,uniValue in uniProbDict.items():
-        numerator = 0
-        denominator = 0
-        for biKey,biValue in biProbDict.items():
-            if biKey[0] == uniKey[0]:
-                numerator += biValue
-                denominator += uniValue
-        alpha = (1-numerator/1-denominator)
-        bowDict[uniKey] = alpha*uniValue
-        
-    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
-          ' 2-gram backoff model made')
-    
-    for biKey,biValue in biProbDict.items():
-        numerator=0
-        denominator=0
-        for triKey,triValue in triProbDict.items():
-            if triKey[0:2] == biKey[:]:
-                numerator += triValue
-                denominator += biValue
-        alpha = 1-(numerator/denominator)
-        bowDict[biKey] = alpha*biValue
-        
-    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
-          ' 3-gram backoff model made')
-    return bowDict
-
-
-def get_brants_bow_dict(nGramDict, alpha=.4):
-    bow_dict={}
-    for key,value in nGramDict.items():
-        bow_dict[key] = (value,alpha*value)
-    return bow_dict
-    
 
 def main():
     # get user input
@@ -260,14 +146,14 @@ def main():
     cutOffWords = get_cutOff_words(tokens,k,startTime)
     lines = replace_cutoff_with_UNK(lines,cutOffWords,startTime)
 
-    # get lists of tuples of nGrams
-    unigrams, bigrams, trigrams = get_nGram_tuples(lines,startTime,
+    # get lists of tuples of ngrams
+    unigrams, bigrams, trigrams = get_ngram_tuples(lines,startTime,
                                                    lenSentenceCutoff=4)
 
     # get probability dictionaries
-    uniProbDict = get_freq_dict(unigrams,1,smoothing,_lambda,startTime)
-    biProbDict = get_freq_dict(bigrams,2,smoothing,_lambda,startTime)
-    triProbDict = get_freq_dict(trigrams,3,smoothing,_lambda,startTime)
+    uniProbDict = get_frequency_dict(unigrams,1,smoothing,_lambda,startTime)
+    biProbDict = get_frequency_dict(bigrams,2,smoothing,_lambda,startTime)
+    triProbDict = get_frequency_dict(trigrams,3,smoothing,_lambda,startTime)
 
     biCondDict = get_conditional_dict(uniProbDict,biProbDict,2)
     triCondDict = get_conditional_dict(biProbDict,triProbDict,3)
@@ -290,6 +176,7 @@ def main():
         outFile.write('ngram 1=' + str(len(uniProbDict)) +'\n')
         outFile.write('ngram 2=' + str(len(biProbDict)) +'\n')
         outFile.write('ngram 3=' + str(len(triProbDict)) +'\n')
+
         ## print unigrams
         outFile.write('\n\\1-grams:\n')
         sortedUni = sorted(uniBowDict.items(), key=operator.itemgetter(1),
