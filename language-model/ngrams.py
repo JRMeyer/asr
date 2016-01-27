@@ -1,8 +1,7 @@
 '''
 Author: Joshua Meyer
 
-USAGE: $ python3 ngrams.py -i INFILE -s SMOOTHING -w LIDSTONE_LAMBDA -b BACKOFF 
-                           -k FREQUENCY_CUTOFF 
+USAGE:$ python3 ngrams.py -i INFILE -s SMOOTHING -b BACKOFF -k FREQUENCY_CUTOFF 
 
 DESCRIPTION: Given a cleaned corpus (text file), output a model of n-grams 
 in ARPA format
@@ -47,10 +46,7 @@ def parse_user_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i','--infile', type=str, help='the input text file')
     parser.add_argument('-s','--smoothing',type=str, help='flavor of smoothing',
-                        choices = ['none','laplace','lidstone','turing'],
-                        default='none')
-    parser.add_argument('-w','--weight', type=int, help='Lidstones lambda',
-                        default=None)
+                        choices = ['none','laplace','turing'], default='none')
     parser.add_argument('-bo','--backoff', action='store_true',
                         help='add backoff weights')
     parser.add_argument('-k','--cutoff', type=int, default=1,
@@ -125,7 +121,6 @@ def main():
     args = parse_user_args()
     fileName = args.infile
     smoothing = args.smoothing
-    _lambda = args.weight
     backoff = args.backoff
     k = args.cutoff
     
@@ -151,9 +146,9 @@ def main():
                                                    lenSentenceCutoff=4)
 
     # get probability dictionaries
-    uniProbDict = get_frequency_dict(unigrams,1,smoothing,_lambda,startTime)
-    biProbDict = get_frequency_dict(bigrams,2,smoothing,_lambda,startTime)
-    triProbDict = get_frequency_dict(trigrams,3,smoothing,_lambda,startTime)
+    uniProbDict = get_frequency_dict(unigrams,1,smoothing,startTime)
+    biProbDict = get_frequency_dict(bigrams,2,smoothing,startTime)
+    triProbDict = get_frequency_dict(trigrams,3,smoothing,startTime)
 
     biCondDict = get_conditional_dict(uniProbDict,biProbDict,2)
     triCondDict = get_conditional_dict(biProbDict,triProbDict,3)
@@ -183,10 +178,10 @@ def main():
                           reverse=True)
         for key,value in sortedUni:
             if backoff:
-                entry = (str(np.log(value[0])) +' '+ key[0] +' '+
-                         str(np.log(value[1])))
+                entry = (str(value[0]) +' '+ key[0] +' '+
+                         str(value[1]))
             else:
-                entry = (str(np.log(value[0])) +' '+ key[0])
+                entry = (str(value[0]) +' '+ key[0])
             outFile.write(entry+'\n')
             
         ## print bigrams
@@ -195,10 +190,10 @@ def main():
                            reverse=True)
         for key,value in sortedBi:
             if backoff:
-                entry = (str(np.log(value[0])) +' '+ key[0] +' '+ key[1] +' '+
-                         str(np.log(value[1])))
+                entry = (str(value[0]) +' '+ key[0] +' '+ key[1] +' '+
+                         str(value[1]))
             else:
-                entry = (str(np.log(value[0])) +' '+ key[0] +' '+ key[1])
+                entry = (str(value[0]) +' '+ key[0] +' '+ key[1])
             outFile.write(entry+'\n')
 
         ## print trigrams
@@ -206,7 +201,7 @@ def main():
         sortedTri = sorted(triCondDict.items(), key=operator.itemgetter(1),
                            reverse=True)
         for key,value in sortedTri:
-            entry = (str(np.log(value)) +' '+ key[0] +' '+ key[1] +' '+ key[2])
+            entry = (str(value) +' '+ key[0] +' '+ key[1] +' '+ key[2])
             outFile.write(entry+'\n')
         outFile.write('\n\end\\')
     print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+

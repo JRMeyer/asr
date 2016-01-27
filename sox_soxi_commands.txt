@@ -13,10 +13,16 @@ for i in *wav; do sox --i $i; done
 for i in *wav; do play $i; done
 
 ## downsample to 16kHz
+# in batch
 for i in *wav; do sox $i -r 16k ${i}_16k.wav; done
+# or just one
+sox test.wav -r 16k test_16k.wav
 
 ## merge stereo channels into one mono
+# in batch
 for i in *wav; do sox $i ${i}_mono_merged.wav remix 1,2; done
+# or just one
+sox test.wav test_mono_merged.wav remix 1,2
 
 #
 ##

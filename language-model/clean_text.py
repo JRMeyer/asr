@@ -1,5 +1,5 @@
 '''
-USE: pyhon3 clean_text.py /path/to/corpus.txt
+USE: python3 clean_text.py /path/to/corpus.txt
 
 FUNCTION:
   Given a path to a text file, this script will:

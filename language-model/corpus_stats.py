@@ -1,7 +1,8 @@
 from collections import Counter
+import numpy as np
 import time
 
-def get_frequency_dict(ngrams, ngramOrder, smoothing, _lambda, startTime):
+def get_frequency_dict(ngrams, ngramOrder, smoothing, startTime):
     '''
     Make a dictionary of frequency counts, where the key is the ngram.
     Without smoothing, we have: p(X) = freq(X)/NUMBER_OF_NGRAMS
@@ -14,15 +15,8 @@ def get_frequency_dict(ngrams, ngramOrder, smoothing, _lambda, startTime):
             probDict[key] = value/denominator
 
     elif smoothing == "laplace":
-        numSmooth = 1
+        numSmooth = .0001
         denominator = (len(ngrams)+ len(ngrams)**ngramOrder)
-        probDict={}
-        for key, value in Counter(ngrams).items():
-            probDict[key] = (value + numSmooth) / denominator
-
-    elif smoothing == 'lidstone':
-        numSmooth = _lambda
-        denominator = (len(ngrams) + (len(ngrams)**ngramOrder)*_lambda)
         probDict={}
         for key, value in Counter(ngrams).items():
             probDict[key] = (value + numSmooth) / denominator
@@ -33,8 +27,8 @@ def get_frequency_dict(ngrams, ngramOrder, smoothing, _lambda, startTime):
         # r = frequency of an n-gram
         # n_r = number of n-grams which occured r times
         # P_T = r*/N, the probability of an n-gram which occured r times
-        # r* = (r+1) * ( (n_{r+1}) / (n_r) )
-        N = len(unigrams)
+        # r* = (r+1) * ( (n_{r+1}) / (n_r) ), the smoothed count for an ngram
+        N = len(ngrams)
         freqDist_ngrams={}
         for key,value in Counter(ngrams).items():
             # key = n-gram, value = r
@@ -69,13 +63,13 @@ def get_conditional_dict(nMinus1GramDict,ngramDict,ngramOrder):
     ngrams.
     
     p(N|N_MINUS_ONE) = p(N)/p(N_MINUS_ONE)
-    p(B|A) =  p(A_B)/p(A)
-    log(p(B|A)) = log(p(A_B)) - log(p(A))
+    p(B|A) =  p(A,B)/p(A)
+    log(p(B|A)) = log(p(A,B)) - log(p(A))
     '''
     ngramCondDict={}
     for ngram, ngramProb in ngramDict.items():
         nMinus1Gram = ngram[:ngramOrder-1]
         nMinus1GramProb = nMinus1GramDict[nMinus1Gram]
-        condNGramProb = ngramProb / nMinus1GramProb
+        condNGramProb = np.log(ngramProb) - np.log(nMinus1GramProb)
         ngramCondDict[ngram] = condNGramProb
     return ngramCondDict

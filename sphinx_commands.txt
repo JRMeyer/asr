@@ -3,18 +3,18 @@
 ## TRAIN A MODEL
 #
 #
-# File Structure - *filenames matter* & 'your_db' should always be the same
+# File Structure - *filenames matter* & 'your_model' should always be the same
 #
-# your_db/
+# your_model/
 # 	etc/
-# 		your_db.dic - Phonetic dictionary
-# 		your_db.phone - Phoneset file
-# 		your_db.lm - Language model
-# 		your_db.filler - List of fillers
-# 		your_db_train.fileids - List of files for training
-# 		your_db_train.transcription - Transcription for training
-# 		your_db_test.fileids - List of files for testing
-# 		your_db_test.transcription - Transcription for testing
+# 		your_model.dic - Phonetic dictionary
+# 		your_model.phone - Phoneset file
+# 		your_model.lm - Language model
+# 		your_model.filler - List of fillers
+# 		your_model_train.fileids - List of files for training
+# 		your_model_train.transcription - Transcription for training
+# 		your_model_test.fileids - List of files for testing
+# 		your_model_test.transcription - Transcription for testing
 # 	wav/
 # 		speaker_1/
 # 			file_1.wav - Recording of speech utterance
@@ -59,7 +59,7 @@
 # 	  +laugh+ ++laugh++	
 # 	  ...
 
-sphinxtrain -t model_dir setup
+sphinxtrain -t your_model setup
 
 ## EXAMPLE OUTPUT
 
