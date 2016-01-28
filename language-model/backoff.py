@@ -1,3 +1,17 @@
+import numpy as np
+
+
+def get_brants_bow_dict(ngramDict, alpha=.4):
+    ''' 
+    based on Brants etal 2007, assuming that 
+    the original probabilities are already logged.
+    '''
+    bow_dict={}
+    for key,value in ngramDict.items():
+        bow_dict[key] = (value, np.log(alpha)+value)
+    return bow_dict
+
+
 def get_katz_bow_dict(uniProbDict,biProbDict,triProbDict,startTime):
     ''' based on Katz 1987 '''
     bowDict={}
@@ -25,11 +39,3 @@ def get_katz_bow_dict(uniProbDict,biProbDict,triProbDict,startTime):
     print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
           ' 3-gram backoff model made')
     return bowDict
-
-
-def get_brants_bow_dict(ngramDict, alpha=.4):
-    ''' based on Brants etal 2007'''
-    bow_dict={}
-    for key,value in ngramDict.items():
-        bow_dict[key] = (value,alpha*value)
-    return bow_dict

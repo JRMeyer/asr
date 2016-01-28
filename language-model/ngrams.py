@@ -32,7 +32,7 @@ SOFTWARE.
 #####################
 '''
 
-from corpus_stats import get_frequency_dict, get_conditional_dict
+from corpus_stats import *
 from backoff import get_brants_bow_dict
 import argparse
 import operator
@@ -145,16 +145,25 @@ def main():
     unigrams, bigrams, trigrams = get_ngram_tuples(lines,startTime,
                                                    lenSentenceCutoff=4)
 
-    # get probability dictionaries
-    uniProbDict = get_frequency_dict(unigrams,1,smoothing,startTime)
-    biProbDict = get_frequency_dict(bigrams,2,smoothing,startTime)
-    triProbDict = get_frequency_dict(trigrams,3,smoothing,startTime)
+    # get raw count dictionaries
+    uniCountDict = get_count_dict(unigrams)
+    biCountDict = get_count_dict(bigrams)
+    triCountDict = get_count_dict(trigrams)
 
-    biCondDict = get_conditional_dict(uniProbDict,biProbDict,2)
-    triCondDict = get_conditional_dict(biProbDict,triProbDict,3)
+    # divide unigram counts by number of unigrams to get probability
+    N = sum(uniCountDict.values())
+    uniProbDict = {}
+    for key,value in uniCountDict.items():
+        uniProbDict[key] = np.log(value/N)
 
+    # get conditional probabilities (maximum likelihood) for all ngrams that 
+    # are not unigrams
+    biMLEdict = get_MLE_dict(uniCountDict,biCountDict,2)
+    triMLEdict = get_MLE_dict(biCountDict,triCountDict,3)
+
+    # get backoff weighting
     uniBowDict = get_brants_bow_dict(uniProbDict)
-    biBowDict = get_brants_bow_dict(biCondDict)
+    biBowDict = get_brants_bow_dict(biMLEdict)
     
     if backoff:
         backedOff = 'yes'
@@ -169,8 +178,8 @@ def main():
         # Print ARPA preamble
         outFile.write('\n\data\\\n')
         outFile.write('ngram 1=' + str(len(uniProbDict)) +'\n')
-        outFile.write('ngram 2=' + str(len(biProbDict)) +'\n')
-        outFile.write('ngram 3=' + str(len(triProbDict)) +'\n')
+        outFile.write('ngram 2=' + str(len(biMLEdict)) +'\n')
+        outFile.write('ngram 3=' + str(len(triMLEdict)) +'\n')
 
         ## print unigrams
         outFile.write('\n\\1-grams:\n')
@@ -198,7 +207,7 @@ def main():
 
         ## print trigrams
         outFile.write('\n\\3-grams:\n')
-        sortedTri = sorted(triCondDict.items(), key=operator.itemgetter(1),
+        sortedTri = sorted(triMLEdict.items(), key=operator.itemgetter(1),
                            reverse=True)
         for key,value in sortedTri:
             entry = (str(value) +' '+ key[0] +' '+ key[1] +' '+ key[2])
