@@ -49,8 +49,6 @@ def parse_user_args():
                         choices = ['none','laplace','turing'], default='none')
     parser.add_argument('-bo','--backoff', action='store_true',
                         help='add backoff weights')
-    parser.add_argument('-k','--cutoff', type=int, default=1,
-                        help='frequency count cutoff')
     args = parser.parse_args()
     return args
 
@@ -92,48 +90,8 @@ def get_ngrams_from_line(tokens, n):
     return ngrams
 
 
-def main():
-    # get user input
-    args = parse_user_args()
-    fileName = args.infile
-    smoothing = args.smoothing
-    backoff = args.backoff
-    k = args.cutoff
-    
-    startTime = time.time()
-    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+ ' running')
-
-    # open previously cleaned file
-    f = open(fileName)
-
-    lines = ''
-    for line in f:
-        lines += line
-        
-    # get lists of tuples of ngrams
-    unigrams, bigrams, trigrams = get_ngram_tuples(lines,startTime,
-                                                   lenSentenceCutoff=4)
-
-    # get raw count dictionaries
-    uniCountDict = get_count_dict(unigrams)
-    biCountDict = get_count_dict(bigrams)
-    triCountDict = get_count_dict(trigrams)
-
-    # divide unigram counts by number of unigrams to get probability
-    N = sum(uniCountDict.values())
-    uniProbDict = {}
-    for key,value in uniCountDict.items():
-        uniProbDict[key] = np.log(value/N)
-
-    # get conditional probabilities (maximum likelihood) for all ngrams that 
-    # are not unigrams
-    biMLEdict = get_MLE_dict(uniCountDict,biCountDict,2)
-    triMLEdict = get_MLE_dict(biCountDict,triCountDict,3)
-
-    # get backoff weighting
-    uniBowDict = get_brants_bow_dict(uniProbDict)
-    biBowDict = get_brants_bow_dict(biMLEdict)
-    
+def print_to_file(uniBowDict,biBowDict,triMLEdict,
+                  backoff,smoothing,startTime):
     if backoff:
         backedOff = 'yes'
     else:
@@ -141,13 +99,12 @@ def main():
         
     with open(('lm_smoothing-' + smoothing +
                '_backoff-' + backedOff +
-               '_cutoff-' + str(k)+
                '.txt'),
               'w', encoding = 'utf-8') as outFile:
         # Print ARPA preamble
         outFile.write('\n\data\\\n')
-        outFile.write('ngram 1=' + str(len(uniProbDict)) +'\n')
-        outFile.write('ngram 2=' + str(len(biMLEdict)) +'\n')
+        outFile.write('ngram 1=' + str(len(uniBowDict)) +'\n')
+        outFile.write('ngram 2=' + str(len(biBowDict)) +'\n')
         outFile.write('ngram 3=' + str(len(triMLEdict)) +'\n')
 
         ## print unigrams
@@ -184,6 +141,50 @@ def main():
         outFile.write('\n\end\\')
     print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
           ' successfully printed model to file!')
+
+
+def main():
+    # get user input
+    args = parse_user_args()
+    fileName = args.infile
+    smoothing = args.smoothing
+    backoff = args.backoff
+    
+    startTime = time.time()
+    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+ ' running')
+
+    # open previously cleaned file
+    f = open(fileName)
+    lines = ''
+    for line in f:
+        # with the indexing I'm cutting off the silence <[\]s> at the ends
+        lines += line[4:-6]
+        
+    # get lists of tuples of ngrams
+    unigrams, bigrams, trigrams = get_ngram_tuples(lines,startTime,
+                                                   lenSentenceCutoff=4)
+
+    # get raw count dictionaries
+    uniCountDict = get_count_dict(unigrams)
+    biCountDict = get_count_dict(bigrams)
+    triCountDict = get_count_dict(trigrams)
+
+    # divide unigram counts by number of unigrams to get probability
+    N = sum(uniCountDict.values())
+    uniProbDict = {}
+    for key,value in uniCountDict.items():
+        uniProbDict[key] = np.log(value/N)
+
+    # get conditional probabilities (maximum likelihood) for all ngrams that 
+    # are not unigrams
+    biMLEdict = get_MLE_dict(uniCountDict,biCountDict,2)
+    triMLEdict = get_MLE_dict(biCountDict,triCountDict,3)
+
+    # get backoff weighting
+    uniBowDict = get_brants_bow_dict(uniProbDict)
+    biBowDict = get_brants_bow_dict(biMLEdict)
+    
+    print_to_file(uniBowDict,biBowDict,triMLEdict,backoff,smoothing,startTime)
 
 
 if __name__ == "__main__":
