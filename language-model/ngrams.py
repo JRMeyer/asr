@@ -55,30 +55,6 @@ def parse_user_args():
     return args
 
 
-def get_cutOff_words(tokens,k,startTime):
-    uniFreqDict = Counter(tokens)
-    cutOffWords=[]
-    for key,value in uniFreqDict.items():
-        if value <= k:
-            cutOffWords.append(key)
-            
-    numCutOffWords = len(cutOffWords)
-    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
-          ' A total of '+ str(numCutOffWords) + ' words occurring less than '+
-          str(k)+ ' time(s) identified')
-    return cutOffWords
-
-
-def replace_cutoff_with_UNK(lines, cutOffWords, startTime):
-    # string.replace() is twice as fast as re.sub()!
-    for key in cutOffWords:
-        lines = lines.replace(' '+key+' ',' <UNK> ')
-            
-    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
-          ' Cutoff Words replaced with <UNK> ')
-    return lines
-
-
 def get_ngram_tuples(lines,startTime,lenSentenceCutoff):
     unigrams=[]
     bigrams=[]
@@ -134,13 +110,6 @@ def main():
     for line in f:
         lines += line
         
-    tokens = [token for line in lines.split('\n')
-              for token in line.strip().split(' ')]
-
-    # make the cutOff
-    cutOffWords = get_cutOff_words(tokens,k,startTime)
-    lines = replace_cutoff_with_UNK(lines,cutOffWords,startTime)
-
     # get lists of tuples of ngrams
     unigrams, bigrams, trigrams = get_ngram_tuples(lines,startTime,
                                                    lenSentenceCutoff=4)
