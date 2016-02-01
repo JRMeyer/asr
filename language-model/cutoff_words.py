@@ -1,6 +1,7 @@
 from collections import Counter
 import time
 import argparse
+import os
 
 def get_cutOff_words(tokens,k,startTime):
     '''
@@ -21,7 +22,7 @@ def get_cutOff_words(tokens,k,startTime):
     return cutOffWords
 
 
-def replace_cutoff_with_UNK(lines, cutOffWords, startTime):
+def replace_cutoff_words_with_UNK(lines, cutOffWords, startTime):
     '''
     Given all the lines in a file represented as a character string, lines, and
     a set of all words which should be replaced in the text, replace all those
@@ -36,11 +37,29 @@ def replace_cutoff_with_UNK(lines, cutOffWords, startTime):
     return lines
 
 
+def delete_cutoff_words(lines, cutOffWords, startTime):
+    '''
+    Given all the lines in a file represented as a character string, lines, and
+    a set of all words which should be deleted in the text, delete all those
+    words 
+    NB - string.replace() is twice as fast as re.sub()!
+    '''
+    for key in cutOffWords:
+        lines = lines.replace(' '+key+' ',' ')
+            
+    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
+          ' Cutoff Words deleted ')
+    return lines
+
+
 def parse_user_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i','--infile', type=str, help='the input text file')
     parser.add_argument('-k','--cutoff', type=int, default=1,
                         help='frequency count cutoff')
+    parser.add_argument('-a','--action', type=str, required = True,
+                        choices=['replace', 'delete'],
+                        help='action to perform on cutoff words')
     args = parser.parse_args()
     return args
 
@@ -48,6 +67,7 @@ if __name__ == '__main__':
     args = parse_user_args()
     fileName = args.infile
     k = args.cutoff
+    action = args.action
     startTime = time.time()
     
     # open previously cleaned file
@@ -59,10 +79,19 @@ if __name__ == '__main__':
 
     tokens = [token for line in lines.split('\n')
               for token in line.strip().split(' ')]
+    print('[  '+ str("%.2f" % (time.time()-startTime)) +'  \t]'+
+          ' A total of '+ str(len(tokens)) + ' words in the input identified')
 
     # make the cutOff
     cutOffWords = get_cutOff_words(tokens,k,startTime)
-    lines = replace_cutoff_with_UNK(lines,cutOffWords,startTime)
 
-    with open('cutoff-replaced-' + fileName, 'w', encoding='utf-8') as outFile:
+    # do the action
+    if action == 'replace':
+        lines = replace_cutoff_words_with_UNK(lines,cutOffWords,startTime)
+    elif action == 'delete':
+        lines = delete_cutoff_words(lines,cutOffWords,startTime)
+
+    outPath = 'cutoff-done-' + os.path.basename(fileName)
+    # print to a new file
+    with open(outPath, 'w', encoding='utf-8') as outFile:
         outFile.write(lines)
