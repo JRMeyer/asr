@@ -1,7 +1,7 @@
 '''
 Author: Joshua Meyer
 
-USAGE:$ python3 ngrams.py -i INFILE -s SMOOTHING -b BACKOFF -k FREQUENCY_CUTOFF 
+USAGE:$ python3 ngrams.py -i INFILE -s SMOOTHING -b BACKOFF
 
 DESCRIPTION: Given a cleaned corpus (text file), output a model of n-grams 
 in ARPA format
@@ -157,8 +157,7 @@ def main():
     f = open(fileName)
     lines = ''
     for line in f:
-        # with the indexing I'm cutting off the silence <[\]s> at the ends
-        lines += line[4:-6]
+        lines += line
         
     # get lists of tuples of ngrams
     unigrams, bigrams, trigrams = get_ngram_tuples(lines,startTime,
