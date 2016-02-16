@@ -35,8 +35,8 @@ kyrgyz_table = {'а':'a ', # back vowels
                'ф':'f ', # labiodentals
                'в':'v ',
                'р':'r ', # trill
-               'ъ':' ',
-               'ь':' '}
+               'ъ':'',
+               'ь':''}
 
 kazakh_table = {'б' : 'b ',
                 'в' : 'v ',

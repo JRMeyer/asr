@@ -49,7 +49,8 @@ if __name__ == '__main__':
     args = parse_user_args()
     fileName = args.infile
     lang = args.language
-
+    # This script assumes that your corpus is already cleaned 
+    # (i.e. all words should be lowercase without any punctuation or numbers)
     f = open(fileName)
 
     tokens=set()
