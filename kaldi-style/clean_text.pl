@@ -2,19 +2,21 @@
 
 # USE: ./clean_text.pl /path/to/corpus.txt
 
-# FUNCTION:
-#   Given a path to a text file, this script will:
-#    (1) split file into lines where sentences should be (see regex object)
-#    (2) tokenize each line (see function tokenize_line()
-#    (3) print new, cleaned lines to output file
+# INPUT: (1) path to a messy corpus text file
+#        (2) interger, minimum length of sentence
+#        (3) Boolean True or False, add silence <s>
 
-# OUTPUT: output.txt (text file with one sentence per line, no non-alphabetic
-#                     characters, all lowercase words, only Kyrgyz characters)
+# OUTPUT: one clean sentence per line, no non-alphabetic
+#         characters, all lowercase words, only Kyrgyz characters
+#         must pipe it to a txt file
+
+# FUNCTION:
 #
-# The script reads utterances/lines one by one and (1) will ignore them if they
-# have singleton a mjakij znak or tvjordyj znak, then (2) delete <s> and </s>
-# and then (3) if the remaining sentence has more than 3 words, print it to an
-# output file
+#  Given a path to a text file, this script will:
+#
+#  Read utterances/lines one by one and clean the line
+#  If the remaining sentence has more than N words, print it to an output file
+
 
 use warnings;
 use strict;
@@ -23,12 +25,20 @@ use Encode;
 use open ':std', ':encoding(UTF-8)';
 binmode STDOUT, ":utf8";
 
+# perl trim function - remove leading and trailing whitespace
+sub trim($)
+{
+  my $string = shift;
+  $string =~ s/^\s+//;
+  $string =~ s/\s+$//;
+  return $string;
+}
+
+# Get command line arguments
 my $infile = $ARGV[0];
-my $outfile = $ARGV[1];
+my $minSentenceLength = $ARGV[1];
+my $addSilence = $ARGV[2];
 
-my $minSentenceLen = 0;
-
-# open(OUTPUT,">>",$outfile), or die "Error: no file found.";
 
 my @kyrgyzLetters = ('а','о','у','ы','и','е','э',
                      'ө','ү','ю','я','ё','п','б',
@@ -51,24 +61,29 @@ open(INPUT,$infile), or die "Error: no file found.";
 my $fileContents = <INPUT>;
 close INPUT;
 
+# split messy corpus on what we think delimit utterances
 for my $sentence (split /[.!?\n]+/, $fileContents) {
+    # make sentence lowercase
     $sentence = lc($sentence);
+    # throw out all non alphabetic characters
     $sentence =~ s/[\P{L}\d_]+/ /g;
+    # throw out all non-Kyrgyz letters
     $sentence =~ s/[^($regex)]/ /g;
 
     if ($sentence =~ $danglers) {
         print "'$sentence' matches the pattern\n";
     } else {
         chomp $sentence;
-        for($sentence) {
-            s/<s>//g;
-            s/<\/s>//g;
-        }
         my @tokens = split / /, $sentence;
         my $numTokens = @tokens;
-        if ($numTokens > $minSentenceLen) {
+        if ($numTokens > $minSentenceLength) {
             my $goodLine = join(' ', @tokens);
-            print "$goodLine\n";
+            $goodLine = trim($goodLine);
+            if ($addSilence){
+                print "<s> $goodLine </s>\n";
+            } else {
+                print "$goodLine\n";
+            }
         }
     }
 }

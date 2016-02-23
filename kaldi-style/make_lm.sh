@@ -1,24 +1,15 @@
 #!/bin/bash
 
-# Use > 1 to consume two arguments per pass in the loop (e.g. each
-# argument has a corresponding value to go with it).
-while [[ $# > 1 ]]
-do
-key="$1"
+# INPUT:
+#   (1) INFILE = cleaned text corpus with <s>'s
+#   (2) OUFILE = filename to save arpa lm to
 
-case $key in
-    -i|--infile)
-    INFILE="$2"
-    shift # past argument
-    ;;
-    -o|--outfile)
-    OUTFILE="$2"
-    shift # past argument
-    ;;
-esac
-shift # past argument or value
-done
+# FUNCTION:
+#  Given a cleaned file with <s>'s, output an ARPA n-gram
+#  model by using IRSTLM
 
+INFILE=$1
+OUTFILE=$2
 
 export IRSTLM=/usr/local
 

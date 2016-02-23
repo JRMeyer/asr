@@ -1,17 +1,31 @@
 #!/usr/bin/env perl
 #
-# This script needs a completely cleaned corpus, ie no puncutation, no numbers
-# it tokenizes the corpus and returns a file of word:pronunciation pairs
+# Author: Josh Meyer 2016
+#
+# INPUT: (1) a cleaned text corpus
+#
+# OUTPUT: (1) a file of word:pronunciation pairs (a phonetic dict)
+#         (2) a list of the phones used in the lookuptable
+#
+# FUNCTION:
+#   The script tokenizes a corpus and returns a file of word:pronunciation pairs
+#
+#   This script requires a completely cleaned corpus, i.e. the text must have
+#   *no* puncutation and *no* numbers.
+#
+#   HOWEVER, it won't break if you give it utterancess with <s>'s.
 #
 
 use warnings;
 use strict;
 
-my $infile = $ARGV[0];
-my $outfile = $ARGV[1];
+my $clean_corpus = $ARGV[0];
+my $phoneticDict = $ARGV[1];
+my $phones = $ARGV[2];
 
-open INFILE, $infile, or die "Could not open $infile: $!";
-open OUTFILE, ">>", $outfile, or die "Could not open $outfile: $!";
+open CLEAN_CORPUS, $clean_corpus, or die "Could not open $clean_corpus: $!";
+open PHONETICDICT, ">>", $phoneticDict, or die "Could not open $phoneticDict: $!";
+open PHONELIST, ">>", $phones, or die "Could not open $phones: $!";
 
 # the default lookup table - if our context dependent rules don't make a
 # character, it gets replaced according to the table
@@ -57,16 +71,21 @@ my $consonant = "п|б|д|т|к|г|х|ш|щ|ж|з|с|ц|ч|й|л|м|н|ң|ф|в|
 my $frontVowel = "и|е|э|ө|ү";
 my $backVowel = "а|о|у|ы";
 
+
+###
+## MAKE pronunciations and store in dict
+#
+
+
 # make a hash dictionary of token:pronunciation pairs
 my %hash;
-while (my $line = <INFILE>) {
-    chomp $line;
-    my @tokens = split / /, $line;
-    while (my $token = <@tokens>) {
+while (my $line = <CLEAN_CORPUS>) {
+    my @tokens = split(' ', $line);
+    foreach my $token (@tokens) {
         if (exists $hash{$token}) {
             # we've seen this token already
             # so we just pass it
-            last;
+            next;
         } else {
             my $phones = $token;
             for($phones) {
@@ -94,15 +113,38 @@ while (my $line = <INFILE>) {
     }
 }
 
-# print token:pronunciation pairs to text file
+###
+##  PRINT word:pronunciation pairs to text file
+#
+
 foreach my $key (keys %hash) {
     if ($key eq "<s>" || $key eq "</s>") {
-        last;
+        next;
     }
     else {
-        print OUTFILE "$key $hash{$key}\n"
+        print PHONETICDICT "$key $hash{$key}\n"
     }
 }
 
 
+###
+## PRINT UNIQUE PHONES TO FILE
+#
 
+# get phones from lookup table
+my $phoneList = "";
+foreach my $key (keys %phoneTable) {
+    my $phone = $phoneTable{$key};
+    $phoneList .= $phone;
+}
+
+# find unique phones and print to file
+my @phones = split / /, $phoneList;
+my %seen = ();
+foreach my $item (@phones) {
+    unless ($seen{$item}) {
+        # if we get here, we have not seen it before
+        $seen{$item} = 1;
+        print PHONELIST "$item\n"
+    }
+}
