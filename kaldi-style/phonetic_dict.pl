@@ -21,10 +21,18 @@ use strict;
 
 my $clean_corpus = $ARGV[0];
 my $phoneticDict = $ARGV[1];
-my $phones = $ARGV[2];
+my $phoneticDict_NOSIL = $ARGV[2];
+
+my $phones = $ARGV[3];
+my $silence_word = $ARGV[4];
+my $silence_phone = $ARGV[5];
+my $unknown_word = $ARGV[6];
+my $unknown_phone = $ARGV[7];
+
 
 open CLEAN_CORPUS, $clean_corpus, or die "Could not open $clean_corpus: $!";
 open PHONETICDICT, ">>", $phoneticDict, or die "Could not open $phoneticDict: $!";
+open PHONETICDICT_NOSIL, ">>", $phoneticDict_NOSIL, or die "Could not open $phoneticDict_NOSIL: $!";
 open PHONELIST, ">>", $phones, or die "Could not open $phones: $!";
 
 # the default lookup table - if our context dependent rules don't make a
@@ -79,6 +87,11 @@ my $backVowel = "а|о|у|ы";
 
 # make a hash dictionary of token:pronunciation pairs
 my %hash;
+
+# add our entries for unknown words and silence to the dictionary
+$hash{$silence_word} = $silence_phone;
+$hash{$unknown_word} = $unknown_phone;
+
 while (my $line = <CLEAN_CORPUS>) {
     my @tokens = split(' ', $line);
     foreach my $token (@tokens) {
@@ -114,37 +127,52 @@ while (my $line = <CLEAN_CORPUS>) {
 }
 
 ###
-##  PRINT word:pronunciation pairs to text file
-#
+##  PRINT word:pronunciation pairs to text files
+##    lexicon.txt and nosil_lexicon.txt
+#      and also save phones to char string
+
+# get phones from lookup table
+my $phoneList = "";
 
 foreach my $key (keys %hash) {
     if ($key eq "<s>" || $key eq "</s>") {
         next;
-    }
-    else {
-        print PHONETICDICT "$key $hash{$key}\n"
+    } else {
+        print PHONETICDICT "$key $hash{$key}\n";
+        $phoneList .= " $hash{$key} ";
+        if ($key ne $silence_word && $key ne $unknown_word) {
+            print PHONETICDICT_NOSIL "$key $hash{$key}\n";
+        }
     }
 }
+
+
 
 
 ###
 ## PRINT UNIQUE PHONES TO FILE
 #
 
-# get phones from lookup table
-my $phoneList = "";
-foreach my $key (keys %phoneTable) {
-    my $phone = $phoneTable{$key};
-    $phoneList .= $phone;
+# clean up phoneList
+for ($phoneList) {
+    # remove trailing whitespace
+    s/^\s+//;
+    s/\s+$//;
+    # remove any newlines anywhere
+    s/\n+/ /g;
+    # replace multiple spaces with just one
+    s/ +/ /g;
 }
 
-# find unique phones and print to file
 my @phones = split / /, $phoneList;
 my %seen = ();
 foreach my $item (@phones) {
-    unless ($seen{$item}) {
-        # if we get here, we have not seen it before
+    if ($seen{$item}) {
+        next;
+    } else {
         $seen{$item} = 1;
         print PHONELIST "$item\n"
     }
 }
+
+
