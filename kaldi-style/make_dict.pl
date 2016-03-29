@@ -18,25 +18,43 @@
 
 use warnings;
 use strict;
+use Getopt::Long;
 
-my $clean_corpus = $ARGV[0];
-my $phoneticDict = $ARGV[1];
-my $phoneticDict_NOSIL = $ARGV[2];
+# DEFAULT VALUES
+my $clean_corpus = "clean.txt";
+my $phoneticDict = "lexicon.txt";
+my $phoneticDict_NOSIL = "lexicon_nosil.txt";
+my $phonesList = "phones.txt";
+my $silence_word = "<SIL>";
+my $silence_phone = "SIL";
+my $unknown_word = "<unk>";
+my $unknown_phone = "SPOKEN_NOISE";
+my $graphemes = 0;
+my $stress = 0;
 
-my $phones = $ARGV[3];
-my $silence_word = $ARGV[4];
-my $silence_phone = $ARGV[5];
-my $unknown_word = $ARGV[6];
-my $unknown_phone = $ARGV[7];
+# get args from command line if they exist
+GetOptions (
+    'clean_corpus=s' => \$clean_corpus,
+    'phoneticDict=s' => \$phoneticDict,
+    'phoneticDict_NOSIL=s' => \$phoneticDict_NOSIL,
+    'phonesList=s' => \$phonesList,
+    'silence_word=s' => \$silence_word,
+    'silence_phone=s' => \$silence_phone,
+    'unknown_word=s' => \$unknown_word,
+    'unknown_phone=s' => \$unknown_phone,
+    'graphemes' => \$graphemes,
+    'stress' => \$stress
+    );
 
-
+# open or create files
 open CLEAN_CORPUS, $clean_corpus, or die "Could not open $clean_corpus: $!";
 open PHONETICDICT, ">>", $phoneticDict, or die "Could not open $phoneticDict: $!";
 open PHONETICDICT_NOSIL, ">>", $phoneticDict_NOSIL, or die "Could not open $phoneticDict_NOSIL: $!";
-open PHONELIST, ">>", $phones, or die "Could not open $phones: $!";
+open PHONELIST, ">>", $phonesList, or die "Could not open $phonesList: $!";
 
 # the default lookup table - if our context dependent rules don't make a
-# character, it gets replaced according to the table
+# character or we're in 'grapheme-mode', letters gets replaced according to 
+# the following table
 my %phoneTable = ("а"=>"a ", # back vowels
                   "о"=>"o ",
                   "у"=>"u ",
@@ -76,14 +94,13 @@ my %phoneTable = ("а"=>"a ", # back vowels
 
 # Idk why, but the [abc] notation doesnt work here
 my $consonant = "п|б|д|т|к|г|х|ш|щ|ж|з|с|ц|ч|й|л|м|н|ң|ф|в|р|ъ|ь";
+my $vowel = "a|o|u|ih|i|e|oe|y";
 my $frontVowel = "и|е|э|ө|ү";
 my $backVowel = "а|о|у|ы";
-
 
 ###
 ## MAKE pronunciations and store in dict
 #
-
 
 # make a hash dictionary of token:pronunciation pairs
 my %hash;
@@ -101,26 +118,31 @@ while (my $line = <CLEAN_CORPUS>) {
             next;
         } else {
             my $phones = $token;
-            for($phones) {
-                # syllable onset plosives followed by front/back vowels
-                s/к($backVowel)/kh $1/g;
-                s/к($frontVowel)/k $1/g;
-                s/г($backVowel)/gh $1/g;
-                s/г($frontVowel)/g $1/g;
-                # syllable final plosives preceded by front/back vowels
-                s/($backVowel)к($consonant)/$1kh $2/g;
-                s/($frontVowel)к($consonant)/$1k $2/g;
-                s/($backVowel)г($consonant)/$1gh $2/g;
-                s/($frontVowel)г($consonant)/$1g $2/g;
-                # word final plosives preceded by front/back vowels
-                s/($backVowel)к$/$1kh/g;
-                s/($frontVowel)к$/$1k/g;
-                s/($backVowel)г$/$1gh/g;
-                s/($frontVowel)г$/$1g/g;
+            if (!$graphemes) {
+                for($phones) {
+                    # syllable onset plosives followed by front/back vowels
+                    s/к($backVowel)/kh $1/g;
+                    s/к($frontVowel)/k $1/g;
+                    s/г($backVowel)/gh $1/g;
+                    s/г($frontVowel)/g $1/g;
+                    # syllable final plosives preceded by front/back vowels
+                    s/($backVowel)к($consonant)/$1kh $2/g;
+                    s/($frontVowel)к($consonant)/$1k $2/g;
+                    s/($backVowel)г($consonant)/$1gh $2/g;
+                    s/($frontVowel)г($consonant)/$1g $2/g;
+                    # word final plosives preceded by front/back vowels
+                    s/($backVowel)к$/$1kh/g;
+                    s/($frontVowel)к$/$1k/g;
+                    s/($backVowel)г$/$1gh/g;
+                    s/($frontVowel)г$/$1g/g;
+                }
             }
             $phones =~ s/(@{[join "|", keys %phoneTable]})/$phoneTable{$1}/g;
             $phones =~ s/^\s+//g;
             $phones =~ s/\s+$//g;
+            if ($stress) {
+                $phones =~ s/(.*)($vowel)/$1$2_STRESSED/;
+            }
             $hash{$token} = $phones;
         }
     }
@@ -132,14 +154,14 @@ while (my $line = <CLEAN_CORPUS>) {
 #      and also save phones to char string
 
 # get phones from lookup table
-my $phoneList = "";
+my $phones = "";
 
 foreach my $key (keys %hash) {
     if ($key eq "<s>" || $key eq "</s>") {
         next;
     } else {
         print PHONETICDICT "$key $hash{$key}\n";
-        $phoneList .= " $hash{$key} ";
+        $phones .= " $hash{$key} ";
         if ($key ne $silence_word && $key ne $unknown_word) {
             print PHONETICDICT_NOSIL "$key $hash{$key}\n";
         }
@@ -153,8 +175,8 @@ foreach my $key (keys %hash) {
 ## PRINT UNIQUE PHONES TO FILE
 #
 
-# clean up phoneList
-for ($phoneList) {
+# clean up phones
+for ($phones) {
     # remove trailing whitespace
     s/^\s+//;
     s/\s+$//;
@@ -164,7 +186,7 @@ for ($phoneList) {
     s/ +/ /g;
 }
 
-my @phones = split / /, $phoneList;
+my @phones = split / /, $phones;
 my %seen = ();
 foreach my $item (@phones) {
     if ($seen{$item}) {
