@@ -69,6 +69,8 @@ for my $sentence (split /[.!?\n]+/, $fileContents) {
     $sentence =~ s/[\P{L}\d_]+/ /g;
     # throw out all non-Kyrgyz letters
     $sentence =~ s/[^($regex)]/ /g;
+    # replace multiple spaces with just one
+    $sentence =~ s/(\t| )+/ /g;
 
     if ($sentence =~ $danglers) {
         next;
