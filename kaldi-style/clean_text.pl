@@ -52,7 +52,7 @@ my $regex = join('|',@kyrgyzLetters);
 # some singleton ъ's and ь's I'm seeing in the corpus. There are other
 # singleton letters I see as well, but these jam up my pipeline because
 # I am not giving them pronunciations in the lexicon
-my $danglers = qr/ (ъ|ь)+ /;
+my $danglers = qr/(^| )(ъ|ь)+( |$)/;
 
 # Read entire file into string:
 local $/;
