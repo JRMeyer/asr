@@ -22,16 +22,17 @@ silence_phone="SIL"
 unknown_word="<unk>"
 unknown_phone="SPOKEN_NOISE"
 
+ngramOrder=1
 ngramFile="task.arpabo"
 
 
-# delete old versions of the files this script makes
-# using -f just to supress error message if the files dont already exist
-rm -f $clean_corpus $phoneticDict $phoneticDict_NOSIL $phonesList \
-    $ngramFile 
+# # delete old versions of the files this script makes
+# # using -f just to supress error message if the files dont already exist
+# rm -f $clean_corpus $phoneticDict $phoneticDict_NOSIL $phonesList \
+#     $ngramFile 
 
-# first clean the corpus
-./clean_text.pl $messy_corpus $minSentenceLength $addSilence > $clean_corpus
+# # first clean the corpus
+# ./clean_text.pl $messy_corpus $minSentenceLength $addSilence > $clean_corpus
 
 # make the phonetic dictionary and list of phones
 ./make_dict.pl \
@@ -44,11 +45,10 @@ rm -f $clean_corpus $phoneticDict $phoneticDict_NOSIL $phonesList \
     --unknown_word $unknown_word \
     --unknown_phone $unknown_phone \
     --stress;
-    # --graphemes;
+    #--graphemes; \
 
-
-# make the ngram language model
-./make_lm.sh $clean_corpus $ngramFile
+# # make the ngram language model
+# ./make_lm.sh $clean_corpus $ngramFile $ngramOrder
 
 # sort files by bytes (kaldi-style) and re-save them with orginal filename
 for fileName in $phoneticDict $phoneticDict_NOSIL $phonesList; do 

@@ -10,10 +10,11 @@
 
 INFILE=$1
 OUTFILE=$2
+NGRAM_ORDER=$3
 
 export IRSTLM=/usr/local
 
-build-lm.sh -i $INFILE -n 3 -o train.ilm.gz -k 5 -v
+build-lm.sh -i $INFILE -n $NGRAM_ORDER -o train.ilm.gz -k 5 -v
 
 compile-lm --text=yes train.ilm.gz $OUTFILE
 
