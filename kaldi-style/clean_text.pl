@@ -25,7 +25,7 @@ use Encode;
 use open ':std', ':encoding(UTF-8)';
 binmode STDOUT, ":utf8";
 
-# perl trim function - remove leading and trailing whitespace
+# define trim function - remove leading and trailing whitespace
 sub trim($)
 {
   my $string = shift;
