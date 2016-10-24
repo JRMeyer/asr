@@ -10,12 +10,16 @@
 #
 
 import re
+import sys
+
+
 
 consonant = "п|б|д|т|к|г|х|ш|щ|ж|з|с|ц|ч|й|л|м|н|ң|ф|в|р|ъ|ь"
 vowel = "и|е|э|ө|ү|а|о|у|ы"
 glide = "ё|я|ю|е"
 
-f = open("clean.txt", "r", encoding="utf-8")
+inFile = open(sys.argv[1], "r", encoding="utf-8")
+outFile = open("output.txt", "w", encoding="utf-8")
 
 # VCV --> V@ @CV
 vcv = re.compile("("+vowel+"|"+glide+")("+consonant+")("+vowel+")")
@@ -27,7 +31,7 @@ vccc = re.compile("("+vowel+"|"+glide+")("+consonant+")("+consonant+")("+consona
 vgv = re.compile("("+vowel+"|"+glide+")("+glide+")")
 
 
-for line in f:
+for line in inFile:
     for word in line.split():
         lenWord = len(word)+1
 
@@ -83,6 +87,9 @@ for line in f:
                 i+=1
                 j+=1
 
-        print(word)
+        print(word, file=outFile, end=' ')
+    print("\n", file=outFile, end='')
+
+outFile.close()
 
 
