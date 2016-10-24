@@ -2,9 +2,12 @@
 #
 # Author: Josh Meyer 2016
 #
-# INPUT: (1) a cleaned text corpus
+# USAGE: $python3 ky_syllable_split.py clean_corpus.txt
 #
-# OUTPUT: (1) words broken up by syllable
+#
+# INPUT: (1) a cleaned text corpus (command line argument)
+#
+# OUTPUT: (1) words broken up by syllable (output.txt)
 #
 
 #
@@ -12,14 +15,12 @@
 import re
 import sys
 
-
+inFile = open(sys.argv[1], "r", encoding="utf-8")
+outFile = open("output.txt", "w", encoding="utf-8")
 
 consonant = "п|б|д|т|к|г|х|ш|щ|ж|з|с|ц|ч|й|л|м|н|ң|ф|в|р|ъ|ь"
 vowel = "и|е|э|ө|ү|а|о|у|ы"
 glide = "ё|я|ю|е"
-
-inFile = open(sys.argv[1], "r", encoding="utf-8")
-outFile = open("output.txt", "w", encoding="utf-8")
 
 # VCV --> V@ @CV
 vcv = re.compile("("+vowel+"|"+glide+")("+consonant+")("+vowel+")")
