@@ -14,7 +14,7 @@ NGRAM_ORDER=$3
 
 export IRSTLM=/usr/lib/irstlm
 
-${IRSTLM}/bin/build-lm.sh -i $INFILE -n $NGRAM_ORDER -o train.ilm.gz -k 5 -v
+${IRSTLM}/bin/build-lm.sh -i $INFILE -n $NGRAM_ORDER -o train.ilm.gz -k 5
 
 ${IRSTLM}/bin/compile-lm --text=yes train.ilm.gz $OUTFILE
 

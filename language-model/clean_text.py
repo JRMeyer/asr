@@ -14,6 +14,25 @@ OUTPUT: output.txt (text file with one sentence per line, no non-alphabetic
 
 import re
 
+def split_sentences_in_file(fileName):
+    '''
+    Given a path to a text file:
+    (1) split file into lines where sentences should be (see regex object)
+    (2) add each line as a character string to 'lines'
+    '''
+    regex = re.compile(r'([.!?\n])')
+    outFile = open('output.txt', 'w')
+    with open(fileName) as inFile:
+        content = inFile.read()
+        for line in re.split(regex,content):
+            if line != '':
+                print(line)
+                print(line, file=outFile)
+            else:
+                pass
+    outFile.close()
+
+
 def clean_lines_in_file(fileName,kyrgyzLetters):
     '''
     Given a path to a text file:
@@ -21,7 +40,7 @@ def clean_lines_in_file(fileName,kyrgyzLetters):
     (2) tokenize each line (see function tokenize_line())
     (3) add each line as a character string to 'lines'
     '''
-    regex = re.compile(r'[.!?\n]')
+    regex = re.compile(r'[.+!?\n]')
     outFile = open('output.txt', 'w')
     with open(fileName) as inFile:
         content = inFile.read()

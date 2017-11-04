@@ -8,8 +8,18 @@
 #    make the pronunciation dictionary and list of phones
 #    make the ngram language model
 
+
+if [ "$#" -ne 1 ]
+then
+    echo "# ERROR"
+    echo "# USAGE: $0 <messy-text-corpus>"
+    exit 1
+fi
+
+
 messy_corpus=$1
-minSentenceLength=0
+
+minSentenceLength=25
 addSilence=1
 clean_corpus="clean.txt"
 
