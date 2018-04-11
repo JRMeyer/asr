@@ -82,6 +82,30 @@
 
 %%% THREE STATES WITH START AND FINAL AND GAUSSIANS
 
+\begin{document}
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3.25cm,thick]
+    
+    \node[state,initial]	(ss)		[]					{$initial$};
+    \node[state,]	(s1)		[right of=ss]					{$0$};
+    \node[state,]	(s2)		[right of=s1]		{$1$};
+    \node[state,]	(s3)		[right of=s2]		{$2$};
+    \node[state,accepting]	(sf)		[right of =s3]					{$final$};
+    
+    \path (ss) 	edge		[right, above] 	node {\texttt{d/$\epsilon$\_uw}$:\epsilon$} 	(s1);
+    \path (s1) 	edge		[loop above] 	node {$\epsilon:gmm0001$} 	(s1);
+    \path (s2) 	edge		[loop above]    node {$\epsilon:gmm0002$} 	(s2);
+    \path (s3)  edge    	[loop above]    node {$\epsilon:gmm0003$}     (s3);
+    \path (s1) 	edge		[right, above] 	    node {$\epsilon:gmm0001$} 	(s2);
+    \path (s2) 	edge		[right, above]         node {$\epsilon:gmm0002$} 	(s3);
+    \path (s3) 	edge		[right, above]         node {$\epsilon:gmm0003$} 	(sf);
+    
+\end{tikzpicture}
+\end{document}
+
+
+
+
+
 %% \begin{document}
 %% \begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3cm,thick]
     
@@ -89,59 +113,37 @@
 %%     \node[state,]	(s1)		[right of=ss]					{$\mathcal{N}(\mu,\sigma^2)$};
 %%     \node[state,]	(s2)		[right of=s1]		{$\mathcal{N}(\mu,\sigma^2)$};
 %%     \node[state,]	(s3)		[right of=s2]		{$\mathcal{N}(\mu,\sigma^2)$};
-%%     \node[state,accepting]	(sf)		[right of =s3]					{$final$};
+%%     \node[state,]	(s4)		[right of=s3]					{$\mathcal{N}(\mu,\sigma^2)$};
+%%     \node[state,]	(s5)		[right of=s4]		{$\mathcal{N}(\mu,\sigma^2)$};
+%%     \node[state,]	(s6)		[right of=s5]		{$\mathcal{N}(\mu,\sigma^2)$};
+%%     \node[state,]	(s7)		[right of=s6]					{$\mathcal{N}(\mu,\sigma^2)$};
+%%     \node[state,]	(s8)		[right of=s7]		{$\mathcal{N}(\mu,\sigma^2)$};
+%%     \node[state,]	(s9)		[right of=s8]		{$\mathcal{N}(\mu,\sigma^2)$};
+%%     \node[state,accepting]	(sf)		[right of =s9]					{$final$};
     
 %%     \path (ss) 	edge		[right, above] 	node {$1$} 	(s1);
 %%     \path (s1) 	edge		[loop above] 	node {$a$} 	(s1);
 %%     \path (s2) 	edge		[loop above]    node {$b$} 	(s2);
 %%     \path (s3)  edge    	[loop above]    node {$c$}     (s3);
+%%     \path (s4) 	edge		[loop above] 	node {$d$} 	(s4);
+%%     \path (s5) 	edge		[loop above]    node {$e$} 	(s5);
+%%     \path (s6)  edge    	[loop above]    node {$f$}     (s6);
+%%     \path (s7) 	edge		[loop above] 	node {$g$} 	(s7);
+%%     \path (s8) 	edge		[loop above]    node {$h$} 	(s8);
+%%     \path (s9)  edge    	[loop above]    node {$i$}     (s9);
+
 %%     \path (s1) 	edge		[right, above] 	    node {$1-a$} 	(s2);
 %%     \path (s2) 	edge		[right, above]         node {$1-b$} 	(s3);
-%%     \path (s3) 	edge		[right, above]         node {$1-c$} 	(sf);
+%%     \path (s3) 	edge		[right, above]         node {$1-c$} 	(s4);
+%%     \path (s4) 	edge		[right, above] 	    node {$1-d$} 	(s5);
+%%     \path (s5) 	edge		[right, above]         node {$1-e$} 	(s6);
+%%     \path (s6) 	edge		[right, above]         node {$1-f$} 	(s7);
+%%     \path (s7) 	edge		[right, above] 	    node {$1-g$} 	(s8);
+%%     \path (s8) 	edge		[right, above]         node {$1-h$} 	(s9);
+%%     \path (s9) 	edge		[right, above]         node {$1-i$} 	(sf);
     
 %% \end{tikzpicture}
 %% \end{document}
-
-
-
-\begin{document}
-\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=3cm,thick]
-    
-    \node[state,initial]	(ss)		[]					{$initial$};
-    \node[state,]	(s1)		[right of=ss]					{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s2)		[right of=s1]		{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s3)		[right of=s2]		{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s4)		[right of=s3]					{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s5)		[right of=s4]		{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s6)		[right of=s5]		{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s7)		[right of=s6]					{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s8)		[right of=s7]		{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,]	(s9)		[right of=s8]		{$\mathcal{N}(\mu,\sigma^2)$};
-    \node[state,accepting]	(sf)		[right of =s9]					{$final$};
-    
-    \path (ss) 	edge		[right, above] 	node {$1$} 	(s1);
-    \path (s1) 	edge		[loop above] 	node {$a$} 	(s1);
-    \path (s2) 	edge		[loop above]    node {$b$} 	(s2);
-    \path (s3)  edge    	[loop above]    node {$c$}     (s3);
-    \path (s4) 	edge		[loop above] 	node {$d$} 	(s4);
-    \path (s5) 	edge		[loop above]    node {$e$} 	(s5);
-    \path (s6)  edge    	[loop above]    node {$f$}     (s6);
-    \path (s7) 	edge		[loop above] 	node {$g$} 	(s7);
-    \path (s8) 	edge		[loop above]    node {$h$} 	(s8);
-    \path (s9)  edge    	[loop above]    node {$i$}     (s9);
-
-    \path (s1) 	edge		[right, above] 	    node {$1-a$} 	(s2);
-    \path (s2) 	edge		[right, above]         node {$1-b$} 	(s3);
-    \path (s3) 	edge		[right, above]         node {$1-c$} 	(s4);
-    \path (s4) 	edge		[right, above] 	    node {$1-d$} 	(s5);
-    \path (s5) 	edge		[right, above]         node {$1-e$} 	(s6);
-    \path (s6) 	edge		[right, above]         node {$1-f$} 	(s7);
-    \path (s7) 	edge		[right, above] 	    node {$1-g$} 	(s8);
-    \path (s8) 	edge		[right, above]         node {$1-h$} 	(s9);
-    \path (s9) 	edge		[right, above]         node {$1-i$} 	(sf);
-    
-\end{tikzpicture}
-\end{document}
 
 
 %% \begin{center}
