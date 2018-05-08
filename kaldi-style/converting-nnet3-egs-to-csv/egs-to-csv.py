@@ -26,7 +26,11 @@ def extract_windows(eg, line, outfile, win_size=29):
 
 
 def main(arkfile, regex, outfile):
-
+    '''
+    arkfile: is the input ark file from kaldi (egs.ark)
+    regex: matches the labels of each eg based on number of dims in output layer
+    outfile: where to save the output
+    '''
     eg=[]
     with open(arkfile,"r") as arkf:
         with open(outfile,"a") as outf:
@@ -56,7 +60,7 @@ if __name__ == "__main__":
     # which make sense for TDNN)
     regex = re.compile("dim=96 \[ ([0-9]*) ") 
 
-    outfile="output.txt"
+    outfile="output.csv"
     
     main(arkfile, regex, outfile)
 
